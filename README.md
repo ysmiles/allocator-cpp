@@ -1,18 +1,17 @@
 # allocator-cpp
 This is a C++ customized allocator based on a simple memory pool.
 
-Tested in VS 2015 at Windows 10.
+It was developped as the OS course project by Yu Shu and tested in VS 2015 at Windows 10. Any Unix-like OS should also work well, but you might need to write your own makefile (pretty easy).
 
-It was developped as the OS course project by Yu Shu. More information may be added later.
+## Brief introduction
 
-**DO NOT recommend** directly copy this as your course project. Use at your own risk.
+![img](/mempool.svg)
+
 
 Ref:
 
 http://www.codeguru.com/cpp/cpp/cpp_mfc/stl/article.php/c4079/Allocators-STL.htm
-
 https://www.codeproject.com/Articles/27487/Why-to-use-memory-pool-and-how-to-implement-it
-
 http://www.josuttis.com/cppcode/allocator.html
 
 http://docs.roguewave.com/sourcepro/11.1/html/toolsug/11-6.html
