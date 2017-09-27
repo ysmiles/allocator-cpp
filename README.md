@@ -22,7 +22,7 @@ C++ allocator could be considered as a wrap of malloc/new. The standard implemen
 The general way to use an allocator is like follows:
 
 ```C++
-vector<int, some_allocator> v;
+    vector<int, some_allocator> v;
 ```
 
 Here some_allocator could be std::allocator (default) or customized allocator defined by ourselves.
@@ -32,10 +32,10 @@ Here are some most important parts an allocator needed.
 A couple of traditional type definitions, such as
 
 ```C++
-typedef size_t    size_type;
-typedef ptrdiff_t difference_type;
-typedef T*        pointer;
-typedef const T*  const_pointer;
+    typedef size_t    size_type;
+    typedef ptrdiff_t difference_type;
+    typedef T*        pointer;
+    typedef const T*  const_pointer;
 ```
 
 Those names ensure that the allocators' client (for instance, 'std::vector') is able to use some relevant types by known names.
@@ -44,10 +44,10 @@ Also these names provide general ways to access specific types, such as pointer.
 A peculiar looking template member structure:
 
 ```C++
-template <class U>
-struct rebind {
-    typedef allocator<U> other;
-};
+    template <class U>
+    struct rebind {
+        typedef allocator<U> other;
+    };
 ```
 
 This ensures the allocator to be able to allocate objects of different types than its template parameter.
@@ -59,14 +59,14 @@ The allocators' client has no idea what type the allocator actually has; thus, t
 Allocation and deallocation member function. These two are the functions which actually do the allocation and deallocation work for allocator.
 
 ```C++
-allocate(size_type n);
+    allocate(size_type n);
 ```
 
 Returns storage for n elements of the element type being used in the memory model.
 Elements will not be constructed/initialized.
 
 ```C++
-deallocate(pointer p, size_type n)
+    deallocate(pointer p, size_type n)
 ```
 
 Deallocates the storage for n elements of the element type being used in the memory model, beginning at location p.
@@ -84,12 +84,55 @@ In this way, small chunk allocation can handle by memory pool. And if we need la
 
 Balancing pool size, block size, and block numbers can help us achieve better performance.
 
-### Tests
-![img](/testresults.png)
+## Tests
+We choose time as a parameter to reference performance.
 
-For now, please refer to the code to see details of test.
+Specifically, we use
 
-### Discussion
+```C++
+    // starting time
+    steady_clock::time_point start_time = steady_clock::now();
+    // ending time
+    steady_clock::time_point end_time = steady_clock::now();
+```
+
+from namespace ```std::chrono``` to measure elapsed time.
+
+We chose different container ```std::vector```, ```std::list```, and ```std::map``` to do the test.
+
+For each container, we did fixed size initialization (except map) and manipulation.
+
+Example of fixed size initialization:
+
+```C++
+    vector<int, y_alloc<int>> vfix(sz);
+```
+
+y_alloc is our self-defined new based allocator.
+
+Example of container manipulation:
+
+```C++
+    vector<teststruct, y_alloc<teststruct>> v;
+        start_time = steady_clock::now();
+        for (auto i = 0; i < sz; ++i) {
+            if (mydist(myeng) % 2 || v.empty())
+                v.push_back(teststruct());
+            else {
+                int i = mydist(myeng) % v.size();
+                auto it = v.begin();
+                std::advance(it, i);
+                v.erase(it);
+            }
+        }
+```
+
+Here, teststruct is a special struct (contain 1024 chars) used for test. Mydist(myeng) is from standard random engine which can give random numbers. Manipulation includes insert element and random remove element.
+
+We can see at 100000 scale, our memory pool based allocator have better overall performance (~40% improve compared to std::allocator at most) at vector and list manipulation. (just a little better for map manipulation).
+Actually, we did not set an upper bound of container size. If the size is kept small, memory pool should behave even better due to lots of allocation and deallocation request.
+
+## Discussion
 At most experiments, our memory pool based allocator have better performance. But note that we also find that sometimes standard or self-implemented new based allocator perform better. 
 
 Because our memory pool is a relatively simple implementation. There should be much improvement could be developing further. For example, we can let the memory pool grow by grow block numbers and link block inside to block outside current pool.
